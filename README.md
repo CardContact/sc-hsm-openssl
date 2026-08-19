@@ -13,7 +13,7 @@ to access keys on a SmartCard-HSM via the PKCS#11 interface.
 The pkcs11-provider is available as Debian package in [trixie-backports](https://tracker.debian.org/pkg/pkcs11-provider).
 
 The PKCS#11 Provider is not automatically added to OpenSSL. You need to
-[edit the openssl.cnf] to add the provider and the PKCS#11 module.
+[edit the openssl.cnf](https://github.com/openssl-projects/pkcs11-provider/blob/main/HOWTO.md) to add the provider and the PKCS#11 module.
 
 You can check the installation with
 
@@ -50,7 +50,7 @@ You can diagnose problems by setting the environment variable `PKCS11_PROVIDER_D
 PKCS11_PROVIDER_DEBUG=file:/dev/stderr,level:2 openssl list -providers
 ````
 
-The verify if things are working, generate a key pair with label "TestKey" and run:
+To verify if things are working, generate a key pair with label "TestKey" and run:
 
 ````
 $ openssl pkey -in pkcs11:object=TestKey -pubin -pubout -text
@@ -87,7 +87,7 @@ The script generates the requires key pairs, creates the Root-CA and certifies t
 
 ## Issuing TLS Server Certificates
 
-Use the `issue-cert` script to issue TLS Server Certificates:
+Use the `issue-cert` script to issue TLS Server certificates:
 
 ````
 $ ./issue-cert localhost
