@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -xe
+
+KEYDIR=key
+REQDIR=req
+CERTDIR=newcerts
+
+HOST=$1
+REQEXT="${2:-v3_req_tls_server}"
+
+openssl req -config openssl.cnf -newkey rsa:2048 -nodes -keyout ${KEYDIR}/prk_${HOST}.pem -out ${REQDIR}/req_${HOST}.pem -reqexts ${REQEXT}  -subj "/C=DE/O=OpenSCDP/OU=Test System CA/CN=${HOST}"
+
+echo -e "Key ${HOST} saved to file key/prk_${HOST}.pem"
+echo -e "Certificate request saved to file ${REQDIR}/req_${HOST}.pem"
+
+openssl req -config openssl.cnf -text -in ${REQDIR}/req_${HOST}.pem
+
+openssl ca -config openssl.cnf -name "CA_System" -batch -keyfile "pkcs11:token=SmartCard-HSM;object=SystemCA;type=private" -in req/req_${HOST}.pem -out ${CERTDIR}/cert_${HOST}.pem

@@ -1,0 +1,74 @@
+#!/bin/bash
+
+set -xe
+
+KEYDIR=key
+REQDIR=req
+CERTDIR=newcerts
+
+HOST=$1
+REQEXT="${2:-v3_req_tls_server}"
+
+#
+# Create a simple CA structure
+#
+
+create_pki() {
+    # Set up Root CA
+    mkdir -p root_ca
+    mkdir -p root_ca/newcerts
+    touch root_ca/index.txt
+    cat > root_ca/serial <<@EOF
+01
+@EOF
+    cat > root_ca/crlnumber <<@EOF
+01
+@EOF
+
+#    sc-hsm-tool --initialize --so-pin 3537363231383830 --pin 648219
+
+    pkcs11-tool --login --keypairgen --key-type rsa:2048 --label "RootCA"
+    # Create self-signed Root CA
+    openssl req -config openssl.cnf -x509 -days 3650 -key "pkcs11:token=SmartCard-HSM;object=RootCA;type=private" -out cert_root_ca.pem -text -subj "/C=DE/O=OpenSCDP"
+
+    echo -e "Content of Root-CA certificate"
+    openssl x509 -in cert_root_ca.pem -text
+
+    pkcs11-tool --login --write-object cert_root_ca.pem --type cert --label "RootCA"
+
+
+    # Set up System CA
+    mkdir -p system_ca
+    mkdir -p system_ca/newcerts
+    touch system_ca/index.txt
+    cat > system_ca/serial <<@EOF
+11
+@EOF
+    cat > system_ca/crlnumber <<@EOF
+01
+@EOF
+
+    pkcs11-tool --login --keypairgen --key-type rsa:2048 --label "SystemCA"
+    openssl req -config openssl.cnf -new -key "pkcs11:token=SmartCard-HSM;object=SystemCA;type=private" -out system_ca/req_system_ca.pem -subj "/C=DE/O=OpenSCDP/OU=Test System CA"
+
+    echo -e "Content of System-CA certificate request"
+    openssl req -config openssl.cnf -text -in system_ca/req_system_ca.pem
+
+    # Sign System CA certificate by Root CA
+    openssl ca -config openssl.cnf -batch -name CA_Root -days 1825 -cert cert_root_ca.pem -keyfile "pkcs11:token=SmartCard-HSM;object=RootCA;type=private" -in system_ca/req_system_ca.pem -out cert_system_ca.pem
+
+    #echo -e "Content of System-CA certificate"
+    openssl x509 -in cert_system_ca.pem -text
+
+    pkcs11-tool --login --write-object cert_system_ca.pem --type cert --label "SystemCA"
+
+    cat cert_root_ca.pem cert_system_ca.pem >cacerts.pem
+
+    mkdir -p ${KEYDIR}
+    mkdir -p ${REQDIR}
+    mkdir -p ${CERTDIR}
+
+}
+
+
+create_pki
