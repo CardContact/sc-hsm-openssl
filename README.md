@@ -83,7 +83,7 @@ Then run the `create-pki` script:
 $ ./create-pki
 ````
 
-The script generates the requires key pairs, creates the Root-CA and certifies the System-CA.
+The script generates the required key pairs, creates the Root-CA and certifies the System-CA.
 
 ## Issuing TLS Server Certificates
 
